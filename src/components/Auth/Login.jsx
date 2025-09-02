@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Paper, Typography } from '@mui/material'
+import { Box, Paper, Typography, Link } from '@mui/material'
+import { Link as RouterLink } from 'react-router-dom'
 import AuthForm from "./AuthForm";
 
 const Login = () => {
@@ -18,6 +19,11 @@ const Login = () => {
                     Sign In
                 </Typography>
                 <AuthForm isLogin={true} />
+                <Box sx={{ textAlign: 'center' }}>
+                    <Link component={RouterLink} to="/signup" variant="body2">
+                        Don't have an account? Sign Up
+                    </Link>
+                </Box>
             </Paper>
         </Box>
     )

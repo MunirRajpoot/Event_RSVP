@@ -1,29 +1,38 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Box, TextField, Button, Typography } from '@mui/material'
+import { Box, TextField, Button, Alert } from '@mui/material'
 
 const AuthForm = ({ isLogin = true }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState('')
-    const { signIn, signUp } = useAuth()
+    const [showConfirmationMessage, setShowConfirmationMessage] = useState(false)
+    const { signIn, signUp, error, clearError } = useAuth()
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
-        setError('')
-        try {
-            const { error } = isLogin
-                ? await signIn({ email, password })
-                : await signUp({ email, password })
+        clearError()
+        setShowConfirmationMessage(false)
 
-            if (error) throw error
-        }
-        catch (error) {
-            setError(error.message)
-        }
-        finally{
+        try {
+            let result
+            if (isLogin) {
+                result = await signIn({ email, password })
+            } else {
+                result = await signUp({ email, password })
+                if (!result.error) {
+                    // Show confirmation message only on successful signup
+                    setShowConfirmationMessage(true)
+                }
+            }
+
+            if (result.error) {
+                console.error('Auth error:', result.error)
+            }
+        } catch (error) {
+            console.error('Unexpected error:', error)
+        } finally {
             setLoading(false)
         }
     }
@@ -54,11 +63,19 @@ const AuthForm = ({ isLogin = true }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
             />
+
             {error && (
-                <Typography color="error" variant="body2">
+                <Alert severity="error" sx={{ mt: 2 }}>
                     {error}
-                </Typography>
+                </Alert>
             )}
+
+            {showConfirmationMessage && (
+                <Alert severity="success" sx={{ mt: 2 }}>
+                    ✅ Account created! Please check your email to confirm before signing in.
+                </Alert>
+            )}
+
             <Button
                 type="submit"
                 fullWidth
@@ -72,4 +89,4 @@ const AuthForm = ({ isLogin = true }) => {
     )
 }
 
-export default AuthForm;
+export default AuthForm
