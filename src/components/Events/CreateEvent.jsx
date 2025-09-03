@@ -17,14 +17,15 @@ const CreateEvent = () => {
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
+        debugger
         e.preventDefault();
 
-        console.log("📤 Creating event:", { title, description, eventDate });
+        console.log("📤 Creating event:", { title, description, event_date: eventDate });
 
         const { event, error } = await createEvent({
             title,
             description,
-            event_date: eventDate,
+            event_date: eventDate, // ✅ correct column name
         });
 
         if (error) {
@@ -40,16 +41,7 @@ const CreateEvent = () => {
             <Typography variant="h5" gutterBottom>
                 Create New Event
             </Typography>
-            <Box
-                component="form"
-                onSubmit={handleSubmit}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e);
-                    }
-                }}
-            >
+            <Box component="form" onSubmit={handleSubmit}>
                 <TextField
                     fullWidth
                     label="Event Title"

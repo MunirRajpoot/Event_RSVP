@@ -8,7 +8,7 @@ export const useEvents = () => {
     useEffect(() => {
         fetchEvents();
 
-        // Subscribe to realtime updates
+        // Realtime subscription
         const channel = supabase
             .channel("events_changes")
             .on(
@@ -23,7 +23,7 @@ export const useEvents = () => {
         };
     }, []);
 
-    // Fetch events for logged-in user
+    // Fetch events for logged-in user (both created + invited)
     const fetchEvents = async () => {
         try {
             const {
@@ -39,14 +39,12 @@ export const useEvents = () => {
 
             const { data, error } = await supabase
                 .from("events")
-                .select(
-                    `
-            *,
-            event_invites!inner(*),
-            rsvps(*)
-          `
-                )
-                .eq("event_invites.user_id", user.id);
+                .select(`
+                    *,
+                    event_invites(user_id),
+                    rsvps(*)
+                `)
+                .or(`host_id.eq."${user.id}", event_invites.user_id.eq."${user.id}"`);
 
             if (error) throw error;
             setEvents(data || []);
@@ -59,37 +57,38 @@ export const useEvents = () => {
 
     // Create new event
     const createEvent = async (eventData) => {
+        debugger
         try {
-            const {
-                data: { user },
-                error: userError,
-            } = await supabase.auth.getUser();
+            console.log("⚡ createEvent CALLED with:", eventData);
 
-            if (userError) throw userError;
-            if (!user) throw new Error("No logged-in user");
+            const { data, error: userError } = await supabase.auth.getUser()
+            console.log("👤 getUser result:", data, userError);
+            debugger
+            // if (userError) throw userError;
+            // if (!user) throw new Error("No logged-in user");
+debugger
+            // const { data, error } = await supabase
+            //     .from("events")
+            //     .insert([{ ...eventData, host_id: user.id }])
+            //     .select()
+            //     .single();
 
-            const { data, error } = await supabase
-                .from("events")
-                .insert([
-                    {
-                        ...eventData,
-                        host_id: user.id, // ✅ required foreign key
-                    },
-                ])
-                .select()
-                .single();
+            // console.log("📥 Supabase response:", { data, error });
 
-            if (error) throw error;
+            // if (error) throw error;
 
-            // ✅ Optimistically update local state
-            setEvents((prev) => [...prev, data]);
-
-            return { event: data, error: null };
+            // setEvents((prev) => [...prev, data]);
+            // return { event: data, error: null };
         } catch (error) {
-            console.error("❌ Error creating event:", error.message);
+            debugger
+            console.error("❌ Error creating event:", error);
             return { event: null, error };
         }
     };
+
+
+
+
 
     return { events, loading, createEvent, fetchEvents };
 };
