@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { useAuth } from "../contexts/AuthContext.jsx"; // <-- import your auth hook
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export const useEvents = () => {
-    const { user } = useAuth(); // ✅ use context user
+    const { user } = useAuth();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,33 +21,37 @@ export const useEvents = () => {
             .on(
                 "postgres_changes",
                 { event: "*", schema: "public", table: "events" },
-                () => fetchEvents()
+                () => {
+                    if (user) fetchEvents(); // ✅ safeguard
+                }
             )
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user]); // ✅ re-run when user changes
+    }, [user]);
 
-    // Fetch events for logged-in user (both created + invited)
+    // Fetch events
     const fetchEvents = async () => {
         if (!user) return;
 
         try {
             const { data, error } = await supabase
-                .from("events")
+                .from('events')
                 .select(`
-          *,
-          event_invites(user_id),
-          rsvps(*)
-        `)
-                .or(`host_id.eq.${user.id}, event_invites.user_id.eq.${user.id}`);
+        *,
+        event_invites!inner(user_id),
+        rsvps(*)
+      `)
+                .or(`host_id.eq.${user.id}`) // only for base table
+                .eq('event_invites.user_id', user.id); // filter relation separately
 
             if (error) throw error;
+
             setEvents(data || []);
         } catch (error) {
-            console.error("❌ Error fetching events:", error.message);
+            console.error('❌ Error fetching events:', error.message);
         } finally {
             setLoading(false);
         }
@@ -56,7 +60,7 @@ export const useEvents = () => {
     // Create new event
     const createEvent = async (eventData) => {
         if (!user) return { event: null, error: new Error("No logged-in user") };
-
+        console.log("📤 Creating event for user:", user.id);
         try {
             const { data, error } = await supabase
                 .from("events")
