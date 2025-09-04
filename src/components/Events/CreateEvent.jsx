@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useEvents } from "../../hooks/useEvents";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     Box,
     TextField,
@@ -10,34 +10,52 @@ import {
 } from "@mui/material";
 
 const CreateEvent = () => {
+    const { events, createEvent, updateEvent } = useEvents();
+    const { id } = useParams();
+    const navigate = useNavigate();
+
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [eventDate, setEventDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const { createEvent } = useEvents();
-    const navigate = useNavigate();
+    // Prefill if editing
+    useEffect(() => {
+        if (id) {
+            console.log("id:", id);
+            
+            const event = events.find((e) => e.id === id);
+            if (event) {
+                setTitle(event.title);
+                setDescription(event.description || "");
+                setEventDate(event.event_date?.slice(0, 16)); // for datetime-local
+            }
+        }
+    }, [id, events]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
 
-        const { event, error } = await createEvent({
+        const eventData = {
             title,
             description,
             event_date: eventDate,
-        });
+        };
 
-        if (error) {
-            console.error("❌ Error creating event:", error.message);
+        let result;
+        if (id) {
+            // update
+            result = await updateEvent(id, eventData);
         } else {
-            console.log("✅ Event created:", event);
+            // create
+            result = await createEvent(eventData);
+        }
 
-            // clear form
-            setTitle("");
-            setDescription("");
-            setEventDate("");
-
+        if (result.error) {
+            console.error("❌ Error saving event:", result.error.message);
+        } else {
+            console.log("✅ Event saved:", result.event);
             navigate("/");
         }
 
@@ -47,7 +65,7 @@ const CreateEvent = () => {
     return (
         <Paper sx={{ p: 3 }}>
             <Typography variant="h5" gutterBottom>
-                Create New Event
+                {id ? "Edit Event" : "Create New Event"}
             </Typography>
             <Box component="form" onSubmit={handleSubmit}>
                 <TextField
@@ -83,7 +101,7 @@ const CreateEvent = () => {
                     sx={{ mt: 2 }}
                     disabled={submitting}
                 >
-                    {submitting ? "Creating..." : "Create Event"}
+                    {submitting ? "Saving..." : id ? "Update Event" : "Create Event"}
                 </Button>
             </Box>
         </Paper>

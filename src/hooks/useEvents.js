@@ -78,5 +78,43 @@ export const useEvents = () => {
         }
     };
 
-    return { events, loading, createEvent, fetchEvents };
+    //update and existing event
+    const updateEvent = async (id, eventData) => {
+        if (!user) return { event: null, error: new Error("No Logged-in user") };
+        try {
+            const { data, error } = await supabase
+                .from("events")
+                .update({ ...eventData })
+                .eq("id", id)
+                .select()
+                .single()
+            if (error) throw error;
+            setEvents((prev) => prev.map(e => e.id === id ? data : e))
+            return { event: data, error: null }
+        } catch (error) {
+            console.error("Error Updating Event:", error.message);
+            return { event: null, error }
+        }
+
+    }
+
+
+    // Delete an Event
+    const deleteEvent = async (id) => {
+        if (!user) return { success: false, error: new Error("No Logged-in User") }
+        try {
+            const { error } = await supabase
+                .from("events")
+                .delete()
+                .eq("id", id);
+
+            if (error) throw error;
+            setEvents((prev) => prev.filter(e => e.id !== id))
+        } catch (error) {
+            console.error("Error Deleting Event:", error.message);
+            return { success: false, error }
+        }
+    }
+
+    return { events, loading, createEvent, updateEvent, deleteEvent, fetchEvents };
 };

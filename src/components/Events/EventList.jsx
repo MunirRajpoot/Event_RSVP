@@ -1,18 +1,37 @@
-import React from 'react'
-import { useEvents } from '../../hooks/useEvents'
-import { Box, Typography, Card, CardContent, Button, Chip } from '@mui/material'
-import { Link } from 'react-router-dom'
-import LoadingSpinner from '../Common/LoadingSpinner.jsx'
-import { supabase } from '../../lib/supabaseClient'
+import React from "react";
+import { useEvents } from "../../hooks/useEvents";
+import {
+    Box,
+    Typography,
+    Card,
+    CardContent,
+    Button,
+    Chip,
+    Stack,
+} from "@mui/material";
+import { Link, useNavigate } from "react-router-dom";
+import LoadingSpinner from "../Common/LoadingSpinner.jsx";
 
 const EventList = () => {
-    const { events, loading } = useEvents()
+    const { events, loading, deleteEvent } = useEvents();
+    const navigate = useNavigate();
 
     const getRSVPCount = (event, status) => {
-        return event.rsvps?.filter(rsvp => rsvp.status === status).length || 0
-    }
+        return event.rsvps?.filter((rsvp) => rsvp.status === status).length || 0;
+    };
 
-    if (loading) return <LoadingSpinner />
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this event?")) {
+            const result = await deleteEvent(id);
+            if (result.error) {
+                alert("❌ Failed to delete event: " + result.error.message);
+            } else {
+                alert("✅ Event deleted!");
+            }
+        }
+    };
+
+    if (loading) return <LoadingSpinner />;
 
     return (
         <Box>
@@ -40,40 +59,56 @@ const EventList = () => {
                             <Typography variant="body2" sx={{ mt: 1 }}>
                                 {event.description}
                             </Typography>
-                            <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+
+                            <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
                                 <Chip
-                                    label={`Yes: ${getRSVPCount(event, 'yes')}`}
+                                    label={`Yes: ${getRSVPCount(event, "yes")}`}
                                     size="small"
                                     color="success"
                                     variant="outlined"
                                 />
                                 <Chip
-                                    label={`No: ${getRSVPCount(event, 'no')}`}
+                                    label={`No: ${getRSVPCount(event, "no")}`}
                                     size="small"
                                     color="error"
                                     variant="outlined"
                                 />
                                 <Chip
-                                    label={`Maybe: ${getRSVPCount(event, 'maybe')}`}
+                                    label={`Maybe: ${getRSVPCount(event, "maybe")}`}
                                     size="small"
                                     color="warning"
                                     variant="outlined"
                                 />
                             </Box>
-                            <Button
-                                component={Link}
-                                to={`/event/${event.id}`}
-                                variant="outlined"
-                                sx={{ mt: 2 }}
-                            >
-                                View Details
-                            </Button>
+
+                            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                                <Button
+                                    variant="outlined"
+                                    component={Link}
+                                    to={`/event/${event.id}`}
+                                >
+                                    View Details
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => navigate(`/edit-event/${event.id}`)}
+                                >
+                                    Edit
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => handleDelete(event.id)}
+                                >
+                                    Delete
+                                </Button>
+                            </Stack>
                         </CardContent>
                     </Card>
                 ))
             )}
         </Box>
-    )
-}
+    );
+};
 
-export default EventList
+export default EventList;

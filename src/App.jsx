@@ -31,7 +31,8 @@ function AppContent() {
           <Route path="/" element={<EventList />} />
           <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/create-event" element={<CreateEvent />} />
-        </Routes>
+          <Route path="/edit-event/:id" element={<CreateEvent />} /> 
+          </Routes>
       </Box>
     </>
   )
