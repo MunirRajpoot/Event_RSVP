@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useEvents } from "../../hooks/useEvents";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-    Box,
-    TextField,
-    Button,
-    Typography,
-    Paper,
-} from "@mui/material";
+import { Box, TextField, Button, Typography, Paper } from "@mui/material";
 
 const CreateEvent = () => {
     const { events, createEvent, updateEvent } = useEvents();
@@ -19,16 +13,13 @@ const CreateEvent = () => {
     const [eventDate, setEventDate] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    // Prefill if editing
     useEffect(() => {
         if (id) {
-            console.log("id:", id);
-            
             const event = events.find((e) => e.id === id);
             if (event) {
                 setTitle(event.title);
                 setDescription(event.description || "");
-                setEventDate(event.event_date?.slice(0, 16)); // for datetime-local
+                setEventDate(event.event_date?.slice(0, 16));
             }
         }
     }, [id, events]);
@@ -37,25 +28,18 @@ const CreateEvent = () => {
         e.preventDefault();
         setSubmitting(true);
 
-        const eventData = {
-            title,
-            description,
-            event_date: eventDate,
-        };
+        const eventData = { title, description, event_date: eventDate };
 
         let result;
         if (id) {
-            // update
             result = await updateEvent(id, eventData);
         } else {
-            // create
             result = await createEvent(eventData);
         }
 
         if (result.error) {
             console.error("❌ Error saving event:", result.error.message);
         } else {
-            console.log("✅ Event saved:", result.event);
             navigate("/");
         }
 

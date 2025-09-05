@@ -9,6 +9,7 @@ import EventDetail from './components/Events/EventDetail'
 import CreateEvent from './components/Events/CreateEvent'
 import { Box } from '@mui/material'
 import { useAuth } from './contexts/AuthContext'
+import MyInvites from './components/Events/MyInvites'
 import './App.css'
 
 function AppContent() {
@@ -32,6 +33,7 @@ function AppContent() {
           <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/create-event" element={<CreateEvent />} />
           <Route path="/edit-event/:id" element={<CreateEvent />} /> 
+          <Route path="/my-invites" element={<MyInvites />} /> 
           </Routes>
       </Box>
     </>

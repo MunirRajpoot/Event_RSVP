@@ -34,6 +34,9 @@ const Navbar = () => {
                     <Button color="inherit" component={RouterLink} to="/create-event">
                         Create Event
                     </Button>
+                    <Button color="inherit" component={RouterLink} to="/my-invites">
+                        My Invites
+                    </Button>
                     {user && (
                         <Button color="inherit" onClick={handleSignOut}>
                             Sign Out

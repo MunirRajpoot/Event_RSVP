@@ -10,8 +10,7 @@ import {
     Stack,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
-import LoadingSpinner from "../Common/LoadingSpinner.jsx";
-
+import LoadingSpinner from "../Common/LoadingSpinner.jsx"
 const EventList = () => {
     const { events, loading, deleteEvent } = useEvents();
     const navigate = useNavigate();
@@ -24,9 +23,9 @@ const EventList = () => {
         if (window.confirm("Are you sure you want to delete this event?")) {
             const result = await deleteEvent(id);
             if (result.error) {
-                alert("❌ Failed to delete event: " + result.error.message);
+                alert("Failed to delete event: " + result.error.message);
             } else {
-                alert("✅ Event deleted!");
+                alert("Event deleted!");
             }
         }
     };
@@ -85,7 +84,7 @@ const EventList = () => {
                                 <Button
                                     variant="outlined"
                                     component={Link}
-                                    to={`/event/${event.id}`}
+                                    to={`/event/${event.id}`}   // ✅ leads to EventDetails
                                 >
                                     View Details
                                 </Button>
