@@ -16,7 +16,7 @@ const Login = () => {
         >
             <Paper elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%' }}>
                 <Typography component="h1" variant="h5" align="center" gutterBottom>
-                    Sign In
+                    Login
                 </Typography>
                 <AuthForm isLogin={true} />
                 <Box sx={{ textAlign: 'center' }}>

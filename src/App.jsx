@@ -4,13 +4,13 @@ import AuthProvider from './contexts/AuthContext'
 import Navbar from './components/Common/Navbar'
 import Login from './components/Auth/Login'
 import Signup from './components/Auth/Signup'
-import EventList from './components/Events/EventList'
 import EventDetail from './components/Events/EventDetail'
 import CreateEvent from './components/Events/CreateEvent'
 import { Box } from '@mui/material'
 import { useAuth } from './contexts/AuthContext'
 import MyInvites from './components/Events/MyInvites'
 import './App.css'
+import EventsPage from './components/Events/EventsPage'
 
 function AppContent() {
   const { user } = useAuth()
@@ -29,11 +29,10 @@ function AppContent() {
       <Navbar />
       <Box sx={{ p: 3 }}>
         <Routes>
-          <Route path="/" element={<EventList />} />
+          <Route path="/" element={<EventsPage />} />
           <Route path="/event/:id" element={<EventDetail />} />
           <Route path="/create-event" element={<CreateEvent />} />
           <Route path="/edit-event/:id" element={<CreateEvent />} /> 
-          <Route path="/my-invites" element={<MyInvites />} /> 
           </Routes>
       </Box>
     </>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useEvents } from "../../hooks/useEvents";
 import { useRSVP } from "../../hooks/useRSVP";
 import { useComments } from "../../hooks/useComments";
+import { supabase } from "../../lib/supabaseClient";
+import PopupCommentModal from "./PopupCommentModal";
 import {
     Box,
     Typography,
@@ -9,7 +11,6 @@ import {
     CardContent,
     Button,
     Stack,
-    TextField,
 } from "@mui/material";
 import LoadingSpinner from "../Common/LoadingSpinner";
 
@@ -20,11 +21,33 @@ const MyInvites = () => {
 
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [commentText, setCommentText] = useState({});
+
+    // Popup states
+    const [openModalFor, setOpenModalFor] = useState(null);
+    const [modalText, setModalText] = useState("");
     const [eventComments, setEventComments] = useState({});
+    const [loadingCommentsFor, setLoadingCommentsFor] = useState(null);
 
     useEffect(() => {
         loadInvitedEvents();
+
+        const channel = supabase
+            .channel("rsvp_changes")
+            .on(
+                "postgres_changes",
+                { event: "UPDATE", schema: "public", table: "rsvps" },
+                (payload) => {
+                    const { event_id, status } = payload.new;
+                    if (status === "yes") {
+                        setEvents((prev) => prev.filter((e) => e.id !== event_id));
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const loadInvitedEvents = async () => {
@@ -37,28 +60,36 @@ const MyInvites = () => {
     const handleRSVP = async (eventId, status) => {
         const { error } = await updateRSVP(eventId, status);
         if (!error) {
+            if (status === "yes") {
+                setEvents((prev) => prev.filter((e) => e.id !== eventId));
+            }
             alert(`RSVP updated: ${status}`);
         } else {
             alert("Failed to update RSVP");
         }
     };
 
-    const handleAddComment = async (eventId) => {
-        if (!commentText[eventId]) return;
-        const { data, error } = await addComment(eventId, commentText[eventId]);
-        if (!error) {
-            setEventComments((prev) => ({
-                ...prev,
-                [eventId]: [data, ...(prev[eventId] || [])],
-            }));
-            setCommentText((prev) => ({ ...prev, [eventId]: "" }));
-        }
-    };
-
-    const loadComments = async (eventId) => {
+    // ✅ Open modal + load comments
+    const handleOpenComments = async (eventId) => {
+        setOpenModalFor(eventId);
+        setLoadingCommentsFor(eventId);
         const { data, error } = await fetchComments(eventId);
         if (!error) {
             setEventComments((prev) => ({ ...prev, [eventId]: data }));
+        }
+        setLoadingCommentsFor(null);
+    };
+
+    // ✅ Submit new comment inside modal
+    const handleModalSubmit = async () => {
+        if (!modalText.trim() || !openModalFor) return;
+        const { data, error } = await addComment(openModalFor, modalText);
+        if (!error && data) {
+            setEventComments((prev) => ({
+                ...prev,
+                [openModalFor]: [data, ...(prev[openModalFor] || [])],
+            }));
+            setModalText("");
         }
     };
 
@@ -66,21 +97,28 @@ const MyInvites = () => {
 
     return (
         <Box>
-            <Typography variant="h4" gutterBottom>
-                My Invites
-            </Typography>
-
             {events.length === 0 ? (
                 <Typography>You have no invited events.</Typography>
             ) : (
                 events.map((event) => (
-                    <Card key={event.id} sx={{ mb: 2 }}>
-                        <CardContent>
+                    <Card key={event.id} sx={{ mb: 2, borderRadius: 3 }}>
+                        <Box
+                            sx={{
+                                p: 1.5,
+                                borderTopLeftRadius: 12,
+                                borderTopRightRadius: 12,
+                                background: "linear-gradient(135deg, #ff6a00 0%, #ee0979 100%)",
+                                color: "white",
+                            }}
+                        >
                             <Typography variant="h6">{event.title}</Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2">
                                 {new Date(event.event_date).toLocaleString()}
                             </Typography>
-                            <Typography variant="body2" sx={{ mt: 1 }}>
+                        </Box>
+
+                        <CardContent>
+                            <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
                                 {event.description}
                             </Typography>
 
@@ -98,50 +136,33 @@ const MyInvites = () => {
                                 ))}
                             </Stack>
 
-                            {/* Comment Input */}
-                            <Box sx={{ mt: 2 }}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Write a comment..."
-                                    value={commentText[event.id] || ""}
-                                    onChange={(e) =>
-                                        setCommentText((prev) => ({
-                                            ...prev,
-                                            [event.id]: e.target.value,
-                                        }))
-                                    }
-                                />
-                                <Button
-                                    sx={{ mt: 1 }}
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() => handleAddComment(event.id)}
-                                    disabled={!commentText[event.id]}
-                                >
-                                    Add Comment
-                                </Button>
-                            </Box>
-
-                            {/* Comments List */}
-                            <Box sx={{ mt: 2 }}>
-                                <Button
-                                    size="small"
-                                    onClick={() => loadComments(event.id)}
-                                    disabled={commentsLoading}
-                                >
-                                    Load Comments
-                                </Button>
-                                {eventComments[event.id]?.map((c) => (
-                                    <Typography key={c.id} variant="body2" sx={{ mt: 1 }}>
-                                        <b>{c.profiles?.display_name || "User"}:</b> {c.content}
-                                    </Typography>
-                                ))}
-                            </Box>
+                            {/* Open Comments Modal */}
+                            <Button
+                                sx={{ mt: 2 }}
+                                variant="contained"
+                                size="small"
+                                onClick={() => handleOpenComments(event.id)}
+                            >
+                                View Comments
+                            </Button>
                         </CardContent>
                     </Card>
                 ))
             )}
+
+            {/* Popup Modal */}
+            <PopupCommentModal
+                open={!!openModalFor}
+                onClose={() => {
+                    setOpenModalFor(null);
+                    setModalText("");
+                }}
+                onSubmit={handleModalSubmit}
+                commentText={modalText}
+                setCommentText={setModalText}
+                comments={eventComments[openModalFor] || []}
+                loading={commentsLoading && loadingCommentsFor === openModalFor}
+            />
         </Box>
     );
 };

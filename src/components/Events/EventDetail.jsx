@@ -5,11 +5,11 @@ import { useEvents } from "../../hooks/useEvents";
 import {
     Box,
     Typography,
-    List,
-    ListItem,
-    ListItemText,
-    Button,
+    Stack,
     Divider,
+    Paper,
+    Chip,
+    Avatar,
 } from "@mui/material";
 import LoadingSpinner from "../Common/LoadingSpinner.jsx";
 import UserSearchInvite from "./UserSearchInvite.jsx";
@@ -22,12 +22,12 @@ const EventDetail = () => {
     const [invites, setInvites] = useState([]);
     const [loadingInvites, setLoadingInvites] = useState(true);
 
+    // Load invites whenever event changes
     useEffect(() => {
-        if (event) {
-            loadInvites();
-        }
+        if (event) loadInvites();
     }, [event]);
 
+    // Load invited users
     const loadInvites = async () => {
         setLoadingInvites(true);
         const { invites, error } = await fetchInvites(event.id);
@@ -35,6 +35,7 @@ const EventDetail = () => {
         setLoadingInvites(false);
     };
 
+    // Remove invite
     const handleRemoveInvite = async (inviteId) => {
         if (!window.confirm("Remove this invite?")) return;
         const result = await removeInvite(inviteId);
@@ -49,47 +50,50 @@ const EventDetail = () => {
     if (!event) return <Typography>Event not found</Typography>;
 
     return (
-        <Box>
-            <Typography variant="h4" gutterBottom>{event.title}</Typography>
-            <Typography>{event.description}</Typography>
-            <Typography sx={{ mb: 2 }}>
-                {new Date(event.event_date).toLocaleString()}
-            </Typography>
+        <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+            {/* Event Info Card */}
+            <Paper elevation={3} sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
+                    {event.title}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                    {event.description}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {new Date(event.event_date).toLocaleString()}
+                </Typography>
+            </Paper>
 
             {/* Invite Users */}
-            <UserSearchInvite eventId={event.id} />
+            <UserSearchInvite
+                eventId={event.id}
+                onInviteAdded={loadInvites} // Refresh invites instantly
+            />
 
-            <Divider sx={{ my: 2 }} />
+            <Divider sx={{ my: 3 }} />
 
-            {/* Already invited users */}
-            <Typography variant="h6">Invited Users</Typography>
+            {/* Invited Users */}
+            <Typography variant="h6" sx={{ mb: 1 }}>
+                Invited Users
+            </Typography>
+
             {loadingInvites ? (
                 <LoadingSpinner />
             ) : invites.length === 0 ? (
-                <Typography>No users invited yet.</Typography>
+                <Typography color="text.secondary">No users invited yet.</Typography>
             ) : (
-                <List>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
                     {invites.map((invite) => (
-                        <ListItem
+                        <Chip
                             key={invite.id}
-                            secondaryAction={
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    size="small"
-                                    onClick={() => handleRemoveInvite(invite.id)}
-                                >
-                                    Remove
-                                </Button>
-                            }
-                        >
-                            <ListItemText
-                                primary={invite.profiles?.display_name || "Unknown"}
-                                secondary={invite.role}
-                            />
-                        </ListItem>
+                            label={invite.profiles?.display_name || "Unknown"}
+                            avatar={<Avatar>{invite.profiles?.display_name?.[0]}</Avatar>}
+                            onDelete={() => handleRemoveInvite(invite.id)}
+                            color="primary"
+                            sx={{ mb: 1 }}
+                        />
                     ))}
-                </List>
+                </Stack>
             )}
         </Box>
     );

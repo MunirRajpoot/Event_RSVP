@@ -1,84 +1,113 @@
 // components/Events/UserSearchInvite.jsx
-import React, { useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import React, { useState, useEffect } from "react";
 import {
     Box,
+    Autocomplete,
     TextField,
-    Button,
-    List,
-    ListItem,
-    ListItemText,
-    Typography,
+    CircularProgress,
+    Snackbar,
+    Alert,
 } from "@mui/material";
 import { useEvents } from "../../hooks/useEvents";
+import { supabase } from "../../lib/supabaseClient";
 
-const UserSearchInvite = ({ eventId }) => {
-    const { inviteUserToEvent } = useEvents();
+const UserSearchInvite = ({ eventId, onInviteAdded }) => {
+    const { inviteUserToEvent, fetchInvites } = useEvents();
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState([]);
+    const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [invitedUsers, setInvitedUsers] = useState([]);
 
-    // Search profiles by display_name
-    const handleSearch = async () => {
-        if (!query.trim()) return;
-        setLoading(true);
+    // Snackbar state
+    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
 
-        const { data, error } = await supabase
-            .from("profiles")
-            .select("id, display_name")
-            .ilike("display_name", `%${query}%`); // case-insensitive search
+    // Load already invited users
+    useEffect(() => {
+        const loadInvites = async () => {
+            const { invites } = await fetchInvites(eventId);
+            setInvitedUsers((invites || []).map((i) => i.user_id));
+        };
+        loadInvites();
+    }, [eventId]);
 
-        if (error) {
-            console.error("❌ Error searching users:", error.message);
+    // Fetch users when query >= 3 chars
+    useEffect(() => {
+        if (query.length < 3) return setOptions([]);
+
+        const fetchUsers = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id, display_name")
+                .ilike("display_name", `%${query}%`);
+
+            if (!error) {
+                // Filter out already invited users
+                const filtered = (data || []).filter((u) => !invitedUsers.includes(u.id));
+                setOptions(filtered);
+            } else {
+                console.error("❌ Error fetching users:", error.message);
+            }
+            setLoading(false);
+        };
+
+        fetchUsers();
+    }, [query, invitedUsers]);
+
+    // Handle user selection
+    const handleSelect = async (user) => {
+        if (!user) return;
+        const result = await inviteUserToEvent(eventId, user.id);
+        if (result.success) {
+            setInvitedUsers((prev) => [...prev, user.id]);
+            onInviteAdded?.(); // refresh parent list
+            setQuery(""); // clear input
+
+            setToast({ open: true, message: `${user.display_name} invited successfully!`, severity: "success" });
         } else {
-            setResults(data || []);
-        }
-        setLoading(false);
-    };
-
-    // Invite selected user
-    const handleInvite = async (userId) => {
-        const result = await inviteUserToEvent(eventId, userId);
-        if (result.error) {
-            alert("❌ Failed to invite: " + result.error.message);
-        } else {
-            alert("✅ User invited successfully!");
+            setToast({ open: true, message: `Failed to invite ${user.display_name}`, severity: "error" });
         }
     };
 
     return (
-        <Box sx={{ mt: 3 }}>
-            <Typography variant="h6">Invite Users</Typography>
-            <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                <TextField
-                    label="Search by Name"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    fullWidth
-                />
-                <Button variant="contained" onClick={handleSearch} disabled={loading}>
-                    {loading ? "Searching..." : "Search"}
-                </Button>
-            </Box>
+        <Box sx={{ mt: 2 }}>
+            <Autocomplete
+                options={options}
+                getOptionLabel={(option) => option.display_name || ""}
+                inputValue={query}
+                onInputChange={(_, value) => setQuery(value)}
+                onChange={(_, value) => handleSelect(value)}
+                loading={loading}
+                noOptionsText="No users found"
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label="Invite users"
+                        InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                                <>
+                                    {loading ? <CircularProgress size={16} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </>
+                            ),
+                        }}
+                    />
+                )}
+                fullWidth
+            />
 
-            <List>
-                {results.map((user) => (
-                    <ListItem
-                        key={user.id}
-                        secondaryAction={
-                            <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => handleInvite(user.id)}
-                            >
-                                Invite
-                            </Button>
-                        }
-                    >
-                        <ListItemText primary={user.display_name} />
-                    </ListItem>
-                ))}
-            </List>
+            {/* Toast notification */}
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={3000}
+                onClose={() => setToast({ ...toast, open: false })}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+                <Alert severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

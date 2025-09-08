@@ -166,6 +166,7 @@ export const useEvents = () => {
 
 
     //fetch invited events (only guest)
+    // fetch invited events (exclude yes)
     const fetchInvitedEvents = async () => {
         if (!user) return [];
         try {
@@ -179,20 +180,35 @@ export const useEvents = () => {
             if (error) throw error;
             if (!invites || invites.length === 0) return [];
 
-            const eventIds = invites.map(invite => invite.event_id);
+            const eventIds = invites.map((invite) => invite.event_id);
 
-            // 2. Get event details for those IDs
+            // 2. Get event details + RSVP status
             const { data: events, error: eventError } = await supabase
                 .from("events")
-                .select("id, title, description, event_date, host_id")
+                .select(`
+        id,
+        title,
+        description,
+        event_date,
+        host_id,
+        rsvps(user_id, status)
+      `)
                 .in("id", eventIds);
 
             if (eventError) throw eventError;
 
-            // 3. Merge role info
-            const invitedEvents = events.map(event => {
-                const invite = invites.find(i => i.event_id === event.id);
-                return { ...event, role: invite?.role || "guest" };
+            // 3. Filter out RSVP = yes
+            const invitedEvents = events.filter((event) => {
+                const rsvp = event.rsvps?.find((r) => r.user_id === user.id);
+                return !rsvp || rsvp.status !== "yes"; // ✅ only show if not yes
+            }).map((event) => {
+                const invite = invites.find((i) => i.event_id === event.id);
+                const rsvp = event.rsvps?.find((r) => r.user_id === user.id);
+                return {
+                    ...event,
+                    role: invite?.role || "guest",
+                    status: rsvp?.status || "pending",
+                };
             });
 
             return invitedEvents;
@@ -201,6 +217,7 @@ export const useEvents = () => {
             return [];
         }
     };
+
 
 
 

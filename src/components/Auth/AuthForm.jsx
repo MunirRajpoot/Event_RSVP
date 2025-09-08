@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Box, TextField, Button, Alert } from '@mui/material'
+import { Box, TextField, Button, Alert, IconButton, InputAdornment } from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
 
 const AuthForm = ({ isLogin = true }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const [showConfirmationMessage, setShowConfirmationMessage] = useState(false)
     const { signIn, signUp, error, clearError } = useAuth()
 
@@ -57,11 +59,23 @@ const AuthForm = ({ isLogin = true }) => {
                 fullWidth
                 name="password"
                 label="Password"
-                type="password"
+                type={showPassword ? 'text' : 'password'} // 👈 toggle type
                 id="password"
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                InputProps={{
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                            >
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                        </InputAdornment>
+                    ),
+                }}
             />
 
             {error && (
@@ -83,7 +97,7 @@ const AuthForm = ({ isLogin = true }) => {
                 sx={{ mt: 3, mb: 2 }}
                 disabled={loading}
             >
-                {isLogin ? 'Sign In' : 'Sign Up'}
+                {isLogin ? 'Login' : 'Register'}
             </Button>
         </Box>
     )
