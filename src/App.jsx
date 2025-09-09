@@ -1,16 +1,15 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import AuthProvider from './contexts/AuthContext'
-import Navbar from './components/Common/Navbar'
 import Login from './components/Auth/Login'
 import Signup from './components/Auth/Signup'
 import EventDetail from './components/Events/EventDetail'
 import CreateEvent from './components/Events/CreateEvent'
 import { Box } from '@mui/material'
 import { useAuth } from './contexts/AuthContext'
-import MyInvites from './components/Events/MyInvites'
 import './App.css'
 import EventsPage from './components/Events/EventsPage'
+import Navbar from './components/common/Navbar.jsx'
 
 function AppContent() {
   const { user } = useAuth()
