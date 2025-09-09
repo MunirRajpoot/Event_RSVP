@@ -9,7 +9,7 @@ import { Box } from '@mui/material'
 import { useAuth } from './contexts/AuthContext'
 import './App.css'
 import EventsPage from './components/Events/EventsPage'
-import Navbar from './components/common/Navbar.jsx'
+import Navbar from './components/Common/Navbar'
 
 function AppContent() {
   const { user } = useAuth()
@@ -25,7 +25,7 @@ function AppContent() {
 
   return (
     <>
-      <Navbar />
+  <Navbar />
       <Box sx={{ p: 3 }}>
         <Routes>
           <Route path="/" element={<EventsPage />} />

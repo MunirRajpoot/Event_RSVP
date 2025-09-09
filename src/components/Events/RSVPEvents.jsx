@@ -7,7 +7,7 @@ import {
     Chip,
     Button,
 } from "@mui/material";
-import LoadingSpinner from "../Common/LoadingSpinner";
+import LoadingSpinner from "../Common/LoadingSpinner.jsx";
 import { useRSVP } from "../../hooks/useRSVP";
 import { useComments } from "../../hooks/useComments";
 import { supabase } from "../../lib/supabaseClient";
