@@ -104,7 +104,7 @@ const RSVPEvents = () => {
                                 p: 1.5,
                                 borderTopLeftRadius: 12,
                                 borderTopRightRadius: 12,
-                                background: "linear-gradient(135deg, #00b09b 0%, #96c93d 100%)",
+                                background: "#3F51B5",
                                 color: "white",
                             }}
                         >
@@ -124,7 +124,7 @@ const RSVPEvents = () => {
                                 label={`RSVP: ${event.status}`}
                                 color={
                                     event.status === "yes"
-                                        ? "success"
+                                        ? "none"
                                         : event.status === "maybe"
                                             ? "warning"
                                             : "error"

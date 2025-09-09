@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Box, TextField, Button, Alert, IconButton, InputAdornment } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { useNavigate } from "react-router-dom";
+
 
 const AuthForm = ({ isLogin = true }) => {
     const [email, setEmail] = useState('')
@@ -10,6 +12,8 @@ const AuthForm = ({ isLogin = true }) => {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmationMessage, setShowConfirmationMessage] = useState(false)
     const { signIn, signUp, error, clearError } = useAuth()
+    const navigate = useNavigate();
+
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -20,27 +24,39 @@ const AuthForm = ({ isLogin = true }) => {
         try {
             let result
             if (isLogin) {
+                // Login case
                 result = await signIn({ email, password })
+                if (!result.error) {
+                    navigate("/") // redirect to homepage
+                }
             } else {
+                // 🔹 Signup case
                 result = await signUp({ email, password })
                 if (!result.error) {
-                    // Show confirmation message only on successful signup
-                    setShowConfirmationMessage(true)
+                    // auto login right after signup
+                    const loginResult = await signIn({ email, password })
+                    if (!loginResult.error) {
+                        navigate("/") // redirect to homepage
+                    } else {
+                        // fallback: show confirmation message if login fails
+                        setShowConfirmationMessage(true)
+                    }
                 }
             }
 
             if (result.error) {
-                console.error('Auth error:', result.error)
+                console.error("Auth error:", result.error)
             }
         } catch (error) {
-            console.error('Unexpected error:', error)
+            console.error("Unexpected error:", error)
         } finally {
             setLoading(false)
         }
     }
 
+
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }} >
             <TextField
                 margin="normal"
                 required

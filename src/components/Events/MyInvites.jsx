@@ -107,7 +107,7 @@ const MyInvites = () => {
                                 p: 1.5,
                                 borderTopLeftRadius: 12,
                                 borderTopRightRadius: 12,
-                                background: "linear-gradient(135deg, #ff6a00 0%, #ee0979 100%)",
+                                background: "#3F51B5",
                                 color: "white",
                             }}
                         >

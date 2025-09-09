@@ -56,8 +56,7 @@ const EventList = () => {
                                 p: 1.5,
                                 borderTopLeftRadius: 12,
                                 borderTopRightRadius: 12,
-                                background:
-                                    "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+                               background: "#3F51B5",
                                 color: "white",
                             }}
                         >
@@ -78,9 +77,9 @@ const EventList = () => {
                             </Typography>
 
                             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-                                <Chip label={`Yes: ${getRSVPCount(event, "yes")}`} size="small" color="success" />
-                                <Chip label={`No: ${getRSVPCount(event, "no")}`} size="small" color="error" />
-                                <Chip label={`Maybe: ${getRSVPCount(event, "maybe")}`} size="small" color="warning" />
+                                <Chip label={`Yes: ${getRSVPCount(event, "yes")}`} size="small" />
+                                <Chip label={`No: ${getRSVPCount(event, "no")}`} size="small"  />
+                                <Chip label={`Maybe: ${getRSVPCount(event, "maybe")}`} size="small"  />
                             </Box>
 
                             <Stack direction="row" spacing={1}>

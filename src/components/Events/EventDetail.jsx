@@ -36,13 +36,12 @@ const EventDetail = () => {
     };
 
     // Remove invite
-    const handleRemoveInvite = async (inviteId) => {
-        if (!window.confirm("Remove this invite?")) return;
-        const result = await removeInvite(inviteId);
-        if (result.success) {
-            setInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
+    const handleRemoveInvite = async (eventId, userId) => {
+        const { success } = await removeInvite(eventId, userId);
+        if (success) {
+            setInvites((prev) => prev.filter((inv) => inv.user_id !== userId)); 
         } else {
-            alert("❌ Failed to remove invite");
+            alert("Failed to remove invite");
         }
     };
 
@@ -83,18 +82,22 @@ const EventDetail = () => {
                 <Typography color="text.secondary">No users invited yet.</Typography>
             ) : (
                 <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {invites.map((invite) => (
-                        <Chip
-                            key={invite.id}
-                            label={invite.profiles?.display_name || "Unknown"}
-                            avatar={<Avatar>{invite.profiles?.display_name?.[0]}</Avatar>}
-                            onDelete={() => handleRemoveInvite(invite.id)}
-                            color="primary"
-                            sx={{ mb: 1 }}
-                        />
-                    ))}
+                    {invites.map((invite) => {
+                        const profile = invite.profile;
+                        return (
+                            <Chip
+                                key={invite.user_id}
+                                label={profile?.display_name || "Unknown"}
+                                onDelete={() => handleRemoveInvite(invite.event_id, invite.user_id)}
+                                color="primary"
+                                sx={{ mb: 1 }}
+                            />
+                        );
+                    })}
                 </Stack>
             )}
+
+
         </Box>
     );
 };

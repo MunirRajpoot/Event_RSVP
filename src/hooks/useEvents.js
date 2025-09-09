@@ -129,32 +129,51 @@ export const useEvents = () => {
     }
 
 
+    // useEvents.js
     const fetchInvites = async (eventId) => {
         try {
-            const { data, error } = await supabase
+            // 1. Get all guest invites (exclude host)
+            const { data: invites, error: invitesError } = await supabase
                 .from("event_invites")
-                .select(`
-        id,
-        user_id,
-        role,
-        profiles(display_name)
-      `)
-                .eq("event_id", eventId);
+                .select("event_id, user_id, role, created_at")
+                .eq("event_id", eventId)
+                .eq("role", "guest"); // only guest fetch
 
-            if (error) throw error;
-            return { invites: data, error: null };
+            if (invitesError) throw invitesError;
+            if (!invites || invites.length === 0) return { invites: [], error: null };
+
+            // 2. Collect userIds
+            const userIds = invites.map((i) => i.user_id);
+
+            // 3. Get profiles for those users
+            const { data: profiles, error: profilesError } = await supabase
+                .from("profiles")
+                .select("id, display_name, avatar_url")
+                .in("id", userIds);
+
+            if (profilesError) throw profilesError;
+
+            // 4. Merge invites with profiles
+            const invitesWithProfiles = invites.map((invite) => ({
+                ...invite,
+                profile: profiles.find((p) => p.id === invite.user_id) || null,
+            }));
+
+            return { invites: invitesWithProfiles, error: null };
         } catch (error) {
             console.error("❌ Error fetching invites:", error.message);
             return { invites: [], error };
         }
     };
 
-    const removeInvite = async (inviteId) => {
+
+    const removeInvite = async (eventId, userId) => {
         try {
             const { error } = await supabase
                 .from("event_invites")
                 .delete()
-                .eq("id", inviteId);
+                .eq("event_id", eventId)
+                .eq("user_id", userId); // 👈 specific guest delete karega
 
             if (error) throw error;
             return { success: true };
@@ -163,7 +182,6 @@ export const useEvents = () => {
             return { success: false, error };
         }
     };
-
 
     //fetch invited events (only guest)
     // fetch invited events (exclude yes)
@@ -200,7 +218,7 @@ export const useEvents = () => {
             // 3. Filter out RSVP = yes
             const invitedEvents = events.filter((event) => {
                 const rsvp = event.rsvps?.find((r) => r.user_id === user.id);
-                return !rsvp || rsvp.status !== "yes"; // ✅ only show if not yes
+                return !rsvp || rsvp.status !== "yes"; //  only show if not yes
             }).map((event) => {
                 const invite = invites.find((i) => i.event_id === event.id);
                 const rsvp = event.rsvps?.find((r) => r.user_id === user.id);
@@ -213,7 +231,7 @@ export const useEvents = () => {
 
             return invitedEvents;
         } catch (err) {
-            console.error("❌ Error fetching invited events:", err.message);
+            console.error("Error fetching invited events:", err.message);
             return [];
         }
     };

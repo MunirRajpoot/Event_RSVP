@@ -74,7 +74,7 @@ const CreateEvent = () => {
                 {/* Header */}
                 <Box
                     sx={{
-                        background: "linear-gradient(135deg, #4f46e5, #3b82f6)",
+                        background: "#3F51B5",
                         color: "#fff",
                         p: 3,
                         borderTopLeftRadius: 12,
@@ -138,18 +138,18 @@ const CreateEvent = () => {
                                 py: 1.5,
                                 borderRadius: 2,
                                 fontSize: "1rem",
-                                background: "linear-gradient(135deg, #4f46e5, #3b82f6)",
-                                "&:hover": {
-                                    background: "linear-gradient(135deg, #4338ca, #2563eb)",
-                                },
+                                background: "#3F51B5",
+                                // "&:hover": {
+                                //     background: "linear-gradient(135deg, #4338ca, #2563eb)",
+                                // },
                             }}
                             disabled={submitting}
                         >
                             {submitting
                                 ? "Saving..."
                                 : id
-                                ? "Update Event"
-                                : "Create Event"}
+                                    ? "Update Event"
+                                    : "Create Event"}
                         </Button>
                     </Box>
                 </CardContent>
